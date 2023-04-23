@@ -66,7 +66,7 @@ def calculate_t(p1: Point3D, p2: Point3D, p3: Point3D, dp1: Point3D, dp2: Point3
         q = b ** 2 - 4 * a * c
         if q >= 0:
             d = math.sqrt(q)
-            return (-b - d) / 2 * a, (-b + d) / 2 * a
+            return (-b - d) / (2 * a), (-b + d) / (2 * a)
         else:
             return -123.0, -123.0
     return -c / b , -c / b
