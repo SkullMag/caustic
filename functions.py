@@ -127,7 +127,6 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
     meters_per_pixel = img_width / width
     print(meters_per_pixel)
 
-    n2 = 1  # never used?
     n1 = 1.49
     nx = np.zeros((width + 1, height + 1))
     ny = np.zeros((width + 1, height + 1))
@@ -142,16 +141,15 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
             H_minus_h = H - little_h
             dz = H_minus_h
 
-            # same question - Oleg - do we need to spaw i and j here 2?
-            ny[i, j] = tan(math.atan(dy / dz) / (n1 - 1))
-            nx[i, j] = tan(math.atan(dx / dz) / (n1 - 1))
+            ny[j, i] = tan(math.atan(dy / dz) / (n1 - 1))
+            nx[j, i] = tan(math.atan(dx / dz) / (n1 - 1))
 
     divergence = np.zeros((width, height))
 
     for j in range(height):
         for i in range(width):
-            δx = (nx[i + 1, j] - nx[i, j])
-            δy = (ny[i, j + 1] - ny[i, j])
+            δx = (nx[j, i + 1] - nx[j, i])
+            δy = (ny[j + 1, i] - ny[j, i])
             divergence[i, j] = δx + δy
 
     print("Have all the divergences")
