@@ -121,8 +121,7 @@ def step_mesh(points: np.ndarray[Point3D], phi: np.ndarray[float]):
 
 
 def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_width: float) -> tuple[np.ndarray, float]:
-    width, height = image.shape
-    # print(len(image))
+    width, height, _ = image.shape
     H = f
     meters_per_pixel = img_width / width
     print(meters_per_pixel)
@@ -133,7 +132,7 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
 
     for j in range(height):
         for i in range(width):
-            node = mesh[i, j]  # swap i и j?
+            node = mesh[j, i]
             dx = (node.ix - node.x) * meters_per_pixel
             dy = (node.iy - node.y) * meters_per_pixel
 
@@ -150,7 +149,7 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
         for i in range(width):
             δx = (nx[j, i + 1] - nx[j, i])
             δy = (ny[j + 1, i] - ny[j, i])
-            divergence[i, j] = δx + δy
+            divergence[j, i] = δx + δy
 
     print("Have all the divergences")
     print(f"Divergence sum: {np.sum(divergence)}")
@@ -159,7 +158,7 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
     h = np.zeros((width, height))
     max_update = 0
     for i in range(10000):
-        max_update = poisson(h, divergence)
+        max_update = poisson(h, divergence, width, height)
 
         if i % 500 == 0:
             print(max_update)
