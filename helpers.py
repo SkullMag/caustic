@@ -32,4 +32,4 @@ def save_loss(loss: np.ndarray[float], prefix=""):
             if val < 0:
                 color[2] = -val * 255
             result[y, x] = color
-    cv2.imwrite(f"{prefix}_loss.jpg", result)
+    cv2.imwrite(f"images/{prefix}_loss.jpg", result)
