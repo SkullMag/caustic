@@ -1,6 +1,3 @@
-from cmath import tan, atan
-
-from poisson import poisson
 from classes import Point3D
 import math
 import numpy as np
