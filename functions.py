@@ -1,6 +1,6 @@
 from numpy import tan
 
-from caustic.poisson import poisson
+from poisson import poisson
 from classes import Point3D
 import math
 import numpy as np
@@ -121,8 +121,7 @@ def step_mesh(points: np.ndarray[Point3D], phi: np.ndarray[float]):
 
 
 def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_width: float) -> tuple[np.ndarray, float]:
-    width, height, _ = image.shape
-    H = f
+    width, height = image.shape
     meters_per_pixel = img_width / width
     print(meters_per_pixel)
 
@@ -130,26 +129,25 @@ def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_wid
     nx = np.zeros((width + 1, height + 1))
     ny = np.zeros((width + 1, height + 1))
 
-    for j in range(height):
-        for i in range(width):
-            node = mesh[j, i]
+    for y in range(height):
+        for x in range(width):
+            node = mesh[y, x]
             dx = (node.ix - node.x) * meters_per_pixel
             dy = (node.iy - node.y) * meters_per_pixel
 
             little_h = node.z * meters_per_pixel
-            H_minus_h = H - little_h
-            dz = H_minus_h
+            dz = f - little_h
 
-            ny[j, i] = tan(math.atan(dy / dz) / (n1 - 1))
-            nx[j, i] = tan(math.atan(dx / dz) / (n1 - 1))
+            ny[y, x] = tan(math.atan(dy / dz) / (n1 - 1))
+            nx[y, x] = tan(math.atan(dx / dz) / (n1 - 1))
 
     divergence = np.zeros((width, height))
 
-    for j in range(height):
-        for i in range(width):
-            δx = (nx[j, i + 1] - nx[j, i])
-            δy = (ny[j + 1, i] - ny[j, i])
-            divergence[j, i] = δx + δy
+    for y in range(height):
+        for x in range(width):
+            δx = (nx[y, x + 1] - nx[y, x])
+            δy = (ny[y + 1, x] - ny[y, x])
+            divergence[y, x] = δx + δy
 
     print("Have all the divergences")
     print(f"Divergence sum: {np.sum(divergence)}")
