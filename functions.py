@@ -115,3 +115,144 @@ def step_mesh(points: np.ndarray[Point3D], phi: np.ndarray[float]):
             v = velocities[p.iy, p.ix]
             points[y, x].x = v.x * coeff + p.x
             points[y, x].y = v.y * coeff + p.y
+
+
+def solidify(input_mesh: np.ndarray[Point3D], offset=100) -> np.ndarray[Point3D]:
+    height, width = input_mesh.shape[:2]
+    total_nodes = width * height * 2
+
+    node_list = np.empty(total_nodes, dtype=Point3D)
+    node_array_top = np.empty((height, width), dtype=Point3D)
+    node_array_bottom = np.empty((height, width), dtype=Point3D)
+
+    num_edge_nodes = width * 2 + (height - 2) * 2
+
+    num_triangles_top = (width - 1) * (height - 1) * 2
+    num_triangles_bottom = num_triangles_top
+    num_triangles_edges = num_edge_nodes * 2
+
+    total_triangles = num_triangles_bottom + num_triangles_top + num_triangles_edges
+
+    print(f"Specs: {width}  {height}  {total_nodes}  {num_edge_nodes}  {num_triangles_bottom} {total_triangles}")
+
+    # Build the bottom surface
+    count = 0
+    for y in range(height):
+        for x in range(width):
+            new_point = Point3D(x, y, -offset, x, y)
+            node_list[count] = new_point
+            node_array_bottom[y, x] = new_point
+            count += 1
+
+    # Copy in the top surface
+    for y in range(height):
+        for x in range(width):
+            node = input_mesh[y, x] # Point3D object
+            if node.ix != x:
+                print(f"OH NO POINTS NOT MATCHED {x} vs {node.ix}")
+            if node.iy != y:
+                print(f"OH NO POINTS NOT MATCHED {y} vs {node.iy}")
+
+            node_list[count] = node
+            node_array_top[y, x] = node
+            count += 1
+    
+    print(f"We now have {count - 1} valid nodes")
+
+    triangles = np.empty(shape=(total_triangles, 3))
+    # Build the triangles for the bottom surface
+    count = 0
+    for y in range(height - 1):
+        for x in range(width - 1):
+            # here x and y establish the column of squares we're in
+            index_ul = (y - 1) * width + x
+            index_ur = index_ul + 1
+
+            index_ll = y * width + x
+            index_lr = index_ll + 1
+
+            triangles[count][0] = index_ul
+            triangles[count][1] = index_ll
+            triangles[count][2] = index_ur
+            count += 1
+
+            triangles[count][0] = index_lr
+            triangles[count][1] = index_ur
+            triangles[count][2] = index_ll
+            count += 1
+    
+    print(triangles)
+
+    print(f"We've filled up {count - 1} triangles")
+
+    # Build the triangles to close the mesh
+
+    x = 1
+    for y in range(height - 1):
+        ll = (y - 1) * width + x
+        ul = ll + total_nodes / 2
+        lr = y * width + x
+        ur = lr + total_nodes / 2
+        
+        triangles[count][0] = ll
+        triangles[count][1] = ul
+        triangles[count][2] = ur
+        count += 1
+        
+        triangles[count][0] = ur
+        triangles[count][1] = lr
+        triangles[count][2] = ll
+        count += 1
+
+    x = width
+    for y in range(height - 1):
+        ll = (y - 1) * width + x
+        ul = ll + total_nodes / 2
+        lr = y * width + x
+        ur = lr + total_nodes / 2
+        
+        triangles[count][0] = ll
+        triangles[count][1] = ur
+        triangles[count][2] = ul
+        count += 1
+        
+        triangles[count][0] = ur
+        triangles[count][1] = ll
+        triangles[count][2] = lr
+        count += 1
+
+    y = 1
+    for x in range(1, width):
+        ll = (y - 1) * width + x
+        ul = ll + total_nodes / 2
+        lr = (y - 1) * width + (x - 1)
+        ur = lr + total_nodes / 2
+        
+        triangles[count][0] = ll
+        triangles[count][1] = ul
+        triangles[count][2] = ur
+        count += 1
+        
+        triangles[count][0] = ur
+        triangles[count][1] = lr
+        triangles[count][2] = ll
+        count += 1
+
+    y = height
+    for x in range(1, width):
+        ll = (y - 1) * width + x
+        ul = ll + total_nodes / 2
+        lr = (y - 1) * width + (x - 1)
+        ur = lr + total_nodes / 2
+        
+        triangles[count][0] = ll
+        triangles[count][1] = ur
+        triangles[count][2] = ul
+        count += 1
+        
+        triangles[count][0] = ur
+        triangles[count][1] = ll
+        triangles[count][2] = lr
+        count += 1
+
+    return node_list, node_array_bottom, triangles, width, height
