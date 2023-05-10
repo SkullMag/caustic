@@ -1,3 +1,6 @@
+from numpy import tan
+
+from poisson import poisson
 from classes import Point3D
 import math
 import numpy as np
@@ -133,3 +136,50 @@ def set_heights(mesh: np.ndarray[Point3D], heights, height_scale=1.0, height_off
 
     for x in range(width + 1):
         mesh[height, x].z = mesh[height - 1, x].z
+
+        
+def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_width: float) -> tuple[np.ndarray, float]:
+    width, height = image.shape
+    meters_per_pixel = img_width / width
+    print(meters_per_pixel)
+
+    n1 = 1.49
+    nx = np.zeros((width + 1, height + 1))
+    ny = np.zeros((width + 1, height + 1))
+
+    for y in range(height):
+        for x in range(width):
+            node = mesh[y, x]
+            dx = (node.ix - node.x) * meters_per_pixel
+            dy = (node.iy - node.y) * meters_per_pixel
+
+            little_h = node.z * meters_per_pixel
+            dz = f - little_h
+
+            ny[y, x] = tan(math.atan(dy / dz) / (n1 - 1))
+            nx[y, x] = tan(math.atan(dx / dz) / (n1 - 1))
+
+    divergence = np.zeros((width, height))
+
+    for y in range(height):
+        for x in range(width):
+            δx = (nx[y, x + 1] - nx[y, x])
+            δy = (ny[y + 1, x] - ny[y, x])
+            divergence[y, x] = δx + δy
+
+    print("Have all the divergences")
+    print(f"Divergence sum: {np.sum(divergence)}")
+    divergence -= np.sum(divergence) / (width * height)
+
+    h = np.zeros((width, height))
+    max_update = 0
+    for i in range(10000):
+        max_update = poisson(h, divergence, width, height)
+
+        if i % 500 == 0:
+            print(max_update)
+        if max_update < 0.00001:
+            print(f"Convergence reached at step {i} with max_update of {max_update}")
+            break
+
+    return h, meters_per_pixel
