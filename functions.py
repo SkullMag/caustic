@@ -120,6 +120,24 @@ def step_mesh(points: np.ndarray[Point3D], phi: np.ndarray[float]):
             points[y, x].y = v.y * coeff + p.y
 
 
+def set_heights(mesh: np.ndarray[Point3D], heights, height_scale=1.0, height_off_set=10):
+    width, height = heights.shape
+
+    for y in range(height):
+        for x in range(width):
+            mesh[y, x].z = heights[y, x] * height_scale + height_off_set
+            if x == 99 and y == 99:
+                print(
+                    f'Example heights: {heights[y, x]}  and  {heights[y, x] * height_scale} and {heights[y, x] * height_scale + height_off_set}'
+                )
+
+    for y in range(height):
+        mesh[y, width].z = mesh[y, width - 1].z
+
+    for x in range(width + 1):
+        mesh[height, x].z = mesh[height - 1, x].z
+
+        
 def find_surface(mesh: np.ndarray[Point3D], image: np.ndarray, f: float, img_width: float) -> tuple[np.ndarray, float]:
     width, height = image.shape
     meters_per_pixel = img_width / width
