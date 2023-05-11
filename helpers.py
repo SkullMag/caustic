@@ -33,3 +33,16 @@ def save_loss(loss: np.ndarray[float], prefix=""):
                 color[2] = -val * 255
             result[y, x] = color
     cv2.imwrite(f"images/{prefix}_loss.jpg", result)
+
+
+def save_obj(mesh, filename: str, scale: float, scalez: float):
+    node_list, _, triangles, width, height = mesh
+    with open(filename, "a") as f:
+        for i in node_list:
+            f.write(f"v {i.x * scale} {i.y * scale} {i.z * scalez}\n")
+        
+        for i in triangles:
+            f.write(f"f {i[0]} {i[1]} {i[2]}\n")
+        
+        f.write(f"dims {width} {height}")
+

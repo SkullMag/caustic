@@ -1,6 +1,6 @@
 import skimage
-from helpers import save_loss
-from functions import create_mesh, compute_loss, step_mesh, find_surface, solidify
+from helpers import save_loss, save_obj
+from functions import create_mesh, compute_loss, step_mesh, find_surface, solidify, set_heights
 import numpy as np
 from poisson import poisson
 from tqdm import tqdm
@@ -45,8 +45,11 @@ def main():
     focal_length = 0.2 # meters
     h, meters_per_pixel = find_surface(mesh, gray, focal_length, artifact_size)
 
+    set_heights(mesh, h, 1, 1)
+
     solid_mesh = solidify(mesh)
-    # TODO: save_obj
+    save_obj(solid_mesh, "result.obj", 1 / 512 * artifact_size, 1 / 512 * artifact_size)
+
 
 if __name__ == "__main__":
     main()
