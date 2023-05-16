@@ -1,7 +1,7 @@
 from numpy import tan
 
 from poisson import poisson
-from classes import Point3D
+from classes import Point3D, Triangle
 import math
 import numpy as np
 
@@ -140,33 +140,35 @@ def solidify(input_mesh: np.ndarray[Point3D], offset=100) -> np.ndarray[Point3D]
 
     # Build the bottom surface
     count = 0
-    for y in range(height):
-        for x in range(width):
+    for y in range(1, height+1):
+        for x in range(1, width+1):
             new_point = Point3D(x, y, -offset, x, y)
             node_list[count] = new_point
-            node_array_bottom[y, x] = new_point
+            node_array_bottom[y-1, x-1] = new_point
             count += 1
 
     # Copy in the top surface
-    for y in range(height):
-        for x in range(width):
-            node = input_mesh[y, x] # Point3D object
-            if node.ix != x:
+    for y in range(1, height+1):
+        for x in range(1, width+1):
+            node = input_mesh[y-1, x-1] # Point3D object
+            copied_point = Point3D(node.x, node.y, node.z, node.ix, node.iy)
+            if node.ix+1 != x:
                 print(f"OH NO POINTS NOT MATCHED {x} vs {node.ix}")
-            if node.iy != y:
+            if node.iy+1 != y:
                 print(f"OH NO POINTS NOT MATCHED {y} vs {node.iy}")
 
-            node_list[count] = node
-            node_array_top[y, x] = node
+            node_list[count] = copied_point
+            node_array_top[y-1, x-1] = copied_point
             count += 1
     
-    print(f"We now have {count - 1} valid nodes")
+    print(f"We now have {count} valid nodes")
 
-    triangles = np.empty(shape=(total_triangles, 3))
+    # triangles = np.empty(shape=(total_triangles, 3))
+    triangles = np.empty(total_triangles, dtype=Point3D)
     # Build the triangles for the bottom surface
     count = 0
-    for y in range(height - 1):
-        for x in range(width - 1):
+    for y in range(1, height):
+        for x in range(1, width):
             # here x and y establish the column of squares we're in
             index_ul = (y - 1) * width + x
             index_ur = index_ul + 1
@@ -174,88 +176,84 @@ def solidify(input_mesh: np.ndarray[Point3D], offset=100) -> np.ndarray[Point3D]
             index_ll = y * width + x
             index_lr = index_ll + 1
 
-            triangles[count][0] = index_ul
-            triangles[count][1] = index_ll
-            triangles[count][2] = index_ur
+            triangles[count] = Triangle(index_ul, index_ll, index_ur)
             count += 1
 
-            triangles[count][0] = index_lr
-            triangles[count][1] = index_ur
-            triangles[count][2] = index_ll
+            triangles[count] = Triangle(index_lr, index_ur, index_ll)
             count += 1
-    
-    print(triangles)
 
-    print(f"We've filled up {count - 1} triangles")
+    print(f"We've filled up {count} triangles")
+    if count != num_triangles_bottom:
+        print(f"Hmm aren't count and triangles bottom equal? {count} vs {num_triangles_bottom})")
+
+    # Build the triangles for the top surface
+    for y in range(1, height):
+        for x in range(1, width):
+            # here x and y establish the column of squares we're in
+            index_ul = (y - 1) * width + x + total_nodes / 2
+            index_ur = index_ul + 1
+
+            index_ll = y * width + x + total_nodes / 2
+            index_lr = index_ll + 1
+
+            triangles[count] = Triangle(index_ul, index_ur, index_ll)
+            count += 1
+            triangles[count] = Triangle(index_lr, index_ll, index_ur)
+            count += 1
+
+    print(f"We've filled up {count} triangles")
 
     # Build the triangles to close the mesh
-
     x = 1
-    for y in range(height - 1):
+    for y in range(1, height):
         ll = (y - 1) * width + x
         ul = ll + total_nodes / 2
         lr = y * width + x
         ur = lr + total_nodes / 2
         
-        triangles[count][0] = ll
-        triangles[count][1] = ul
-        triangles[count][2] = ur
+        triangles[count] = Triangle(ll, ul, ur)
         count += 1
         
-        triangles[count][0] = ur
-        triangles[count][1] = lr
-        triangles[count][2] = ll
+        triangles[count] = Triangle(ur, lr, ll)
         count += 1
 
     x = width
-    for y in range(height - 1):
+    for y in range(1, height):
         ll = (y - 1) * width + x
         ul = ll + total_nodes / 2
         lr = y * width + x
         ur = lr + total_nodes / 2
         
-        triangles[count][0] = ll
-        triangles[count][1] = ur
-        triangles[count][2] = ul
+        triangles[count] = Triangle(ll, ur, ul)
         count += 1
         
-        triangles[count][0] = ur
-        triangles[count][1] = ll
-        triangles[count][2] = lr
+        triangles[count] = Triangle(ur, ll, lr)
         count += 1
 
     y = 1
-    for x in range(1, width):
+    for x in range(2, width+1):
         ll = (y - 1) * width + x
         ul = ll + total_nodes / 2
         lr = (y - 1) * width + (x - 1)
         ur = lr + total_nodes / 2
         
-        triangles[count][0] = ll
-        triangles[count][1] = ul
-        triangles[count][2] = ur
+        triangles[count] = Triangle(ll, ul, ur)
         count += 1
         
-        triangles[count][0] = ur
-        triangles[count][1] = lr
-        triangles[count][2] = ll
+        triangles[count] = Triangle(ur, lr, ll)
         count += 1
 
     y = height
-    for x in range(1, width):
+    for x in range(2, width+1):
         ll = (y - 1) * width + x
         ul = ll + total_nodes / 2
         lr = (y - 1) * width + (x - 1)
         ur = lr + total_nodes / 2
         
-        triangles[count][0] = ll
-        triangles[count][1] = ur
-        triangles[count][2] = ul
+        triangles[count] = Triangle(ll, ur, ul)
         count += 1
         
-        triangles[count][0] = ur
-        triangles[count][1] = ll
-        triangles[count][2] = lr
+        triangles[count] = Triangle(ur, ll, lr)
         count += 1
 
     return node_list, node_array_bottom, triangles, width, height
