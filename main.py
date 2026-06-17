@@ -1,3 +1,4 @@
+import argparse
 import skimage
 from helpers import save_loss, save_obj
 from functions import create_mesh, compute_loss, step_mesh, find_surface, solidify, set_heights
@@ -26,8 +27,8 @@ def iteration(mesh, gray, prefix):
     step_mesh(mesh, phi)
 
 
-def main():
-    img = skimage.io.imread("images/cat_posing.jpg")
+def main(image="images/cat_posing.jpg"):
+    img = skimage.io.imread(image)
     gray = skimage.color.rgb2gray(img)
     height, width = gray.shape[:2]
 
@@ -52,4 +53,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Generate a caustic lens .obj from an image.")
+    parser.add_argument(
+        "image",
+        nargs="?",
+        default="images/cat_posing.jpg",
+        help="Path or URL of the source image (default: images/cat_posing.jpg)",
+    )
+    args = parser.parse_args()
+    main(args.image)
