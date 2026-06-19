@@ -29,6 +29,8 @@ def iteration(mesh, gray, prefix):
 
 def main(image="images/cat_posing.jpg"):
     img = skimage.io.imread(image)
+    if img.ndim == 3 and img.shape[2] == 4:
+        img = skimage.color.rgba2rgb(img)
     gray = skimage.color.rgb2gray(img)
     height, width = gray.shape[:2]
 

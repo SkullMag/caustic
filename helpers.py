@@ -22,7 +22,7 @@ def plot_mesh(points):
 
 def save_loss(loss: np.ndarray[float], prefix=""):
     h, w = loss.shape[:2]
-    result = np.zeros((w, h, 3), dtype=np.uint8)
+    result = np.zeros((h, w, 3), dtype=np.uint8)
     for y in range(h):
         for x in range(w):
             color = [0, 0, 0] # BGR
